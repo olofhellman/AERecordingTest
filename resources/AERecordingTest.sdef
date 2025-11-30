@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+
+<!-- declare the namespace for using XInclude so we can include the standard suite -->
+<dictionary title="AERecordingTest Terminology" xmlns:xi="http://www.w3.org/2003/XInclude">
+	<suite name="Required Suite" code="reqd" description="Terms that every application should support">
+		<command name="run" code="aevtoapp" description="Sent to an application when it is double-clicked" />
+
+		<command name="quit" code="aevtquit" description="Quit the application.">
+			<parameter name="saving" code="savo" type="save options" optional="yes" description="Should changes be saved before quitting?">
+			</parameter>
+		</command>
+        
+		<command name="open" code="aevtodoc" description="Open a document.">
+			<direct-parameter description="The file(s) to be opened.">
+				<type type="file"/>
+				<type type="file" list="yes"/>
+			</direct-parameter>
+			<result description="The opened document(s).">
+				<type type="document"/>
+				<type type="document" list="yes"/>
+			</result>
+		</command>
+	</suite>
+	<suite name="Standard Suite" code="****" description="Common terms for most applications.">
+
+		<enumeration name="save options" code="savo">
+			<enumerator name="yes" code="yes " description="Save the file."/>
+			<enumerator name="no" code="no  " description="Do not save the file."/>
+			<enumerator name="ask" code="ask " description="Ask the user whether or not to save the file."/>
+		</enumeration>
+
+		<command name="close" code="coreclos" description="Close a document.">
+			<access-group identifier="*"/>
+			<direct-parameter type="specifier" requires-access="r" description="the document(s) or window(s) to close."/>
+			<parameter name="saving" code="savo" type="save options" optional="yes" description="Should changes be saved before closing?">
+			</parameter>
+			<parameter name="saving in" code="kfil" type="file" optional="yes" description="The file in which to save the document, if so.">
+			</parameter>
+		</command>
+
+		<command name="save" code="coresave" description="Save a document.">
+			<access-group identifier="*"/>
+			<direct-parameter type="specifier" requires-access="r" description="The document(s) or window(s) to save."/>
+			<parameter name="in" code="kfil" type="file" optional="yes" description="The file in which to save the document.">
+			</parameter>
+			<parameter name="filename" code="filN" type="text" optional="yes" description="The filename to use.">
+			</parameter>
+			<parameter name="as" code="fltp" type="text" optional="yes" description="The file format to use.  If the type is not available the operation will fail">
+			</parameter>
+		</command>
+
+		<command name="count" code="corecnte" description="Return the number of elements of a particular class within an object.">
+			<access-group identifier="*"/>
+			<direct-parameter type="specifier" requires-access="r" description="The objects to be counted."/>
+			<parameter name="each" code="kocl" type="type" optional="yes" description="The class of objects to be counted." hidden="yes">
+			</parameter>
+			<result type="integer" description="The count."/>
+		</command>
+
+		<command name="delete" code="coredelo" description="Delete an object.">
+			<access-group identifier="*"/>
+			<direct-parameter type="specifier" description="The object(s) to delete."/>
+		</command>
+
+		<command name="exists" code="coredoex" description="Verify that an object exists.">
+			<access-group identifier="*"/>
+			<direct-parameter type="any" requires-access="r" description="The object(s) to check."/>
+			<result type="boolean" description="Did the object(s) exist?"/>
+		</command>
+
+		<command name="make" code="corecrel" description="Create a new object.">
+			<access-group identifier="*"/>
+			<parameter name="new" code="kocl" type="type" description="The class of the new object.">
+			</parameter>
+			<parameter name="at" code="insh" type="location specifier" optional="yes" description="The location at which to insert the object.">
+			</parameter>
+			<parameter name="with data" code="data" type="any" optional="yes" description="The initial contents of the object.">
+			</parameter>
+			<parameter name="with properties" code="prdt" type="record" optional="yes" description="The initial values for properties of the object.">
+			</parameter>
+			<result type="specifier" description="The new object."/>
+		</command>
+
+		<command name="move" code="coremove" description="Move an object to a new location.">
+			<access-group identifier="*"/>
+			<direct-parameter type="specifier" requires-access="r" description="The object(s) to move."/>
+			<parameter name="to" code="insh" type="location specifier" description="The new location for the object(s).">
+			</parameter>
+		</command>
+
+		<class name="application" code="capp" description="The application's top-level scripting object.">
+			<property name="name" code="pnam" type="text" access="r" description="The name of the application."/>
+			<property name="frontmost" code="pisf" type="boolean" access="r" description="Is this the active application?">
+			</property>
+			<property name="version" code="vers" type="text" access="r" description="The version number of the application."/>
+			<element type="document">
+			</element>
+			<element type="window" access="r">
+			</element>
+			<responds-to command="open">
+			</responds-to>
+			<responds-to command="print">
+			</responds-to>
+			<responds-to command="quit">
+			</responds-to>
+		</class>
+
+		<class name="document" code="docu" description="A document.">
+			<property name="name" code="pnam" type="text" access="r" description="Its name.">
+			</property>
+			<property name="modified" code="imod" type="boolean" access="r" description="Has it been modified since the last save?">
+			</property>
+			<property name="file" code="file" type="file" access="r" description="Its location on disk, if it has one.">
+			</property>
+			<responds-to command="close">
+			</responds-to>
+			<responds-to command="save">
+			</responds-to>
+            <element type="window"/>
+		</class>
+
+		<class name="window" code="cwin" description="A window.">
+			<property name="name" code="pnam" type="text" access="r" description="The title of the window.">
+			</property>
+			<property name="id" code="ID  " type="integer" access="r" description="The unique identifier of the window.">
+			</property>
+			<property name="index" code="pidx" type="integer" description="The index of the window, ordered front to back.">
+			</property>
+			<property name="bounds" code="pbnd" type="rectangle" description="The bounding rectangle of the window.">
+			</property>
+			<property name="closeable" code="hclb" type="boolean" access="r" description="Does the window have a close button?">
+			</property>
+			<property name="miniaturizable" code="ismn" type="boolean" access="r" description="Does the window have a minimize button?">
+			</property>
+			<property name="miniaturized" code="pmnd" type="boolean" description="Is the window minimized right now?">
+			</property>
+			<property name="resizable" code="prsz" type="boolean" access="r" description="Can the window be resized?">
+			</property>
+			<property name="visible" code="pvis" type="boolean" description="Is the window visible right now?">
+			</property>
+			<property name="zoomable" code="iszm" type="boolean" access="r" description="Does the window have a zoom button?">
+			</property>
+			<property name="zoomed" code="pzum" type="boolean" description="Is the window zoomed right now?">
+			</property>
+			<property name="document" code="docu" type="document" access="r" description="The document whose contents are displayed in the window."/>
+			<responds-to command="close">
+			</responds-to>
+			<responds-to command="save">
+			</responds-to>
+		</class>
+
+	</suite>
+    
+    <suite name="AERecordingTest Suite" code="AERT" description="The AERecordingTest Suite.">
+        <class name="application" code="capp" description="AERecordingTest Application">
+             <property name="secret" code="Secr" type="text" access="rw" description="A place to stash any integer. This could be useful to differentiate between two different instances of this app."/>
+             <element type="document"/>
+        </class>
+       
+    </suite>
+
+    <suite name="Internet Suite" code="GURL" description="Standard Internet Suite.">
+        <command name="open location" code="GURLGURL" description="opens the given url.">
+            <direct-parameter type="text"/>
+        </command>        
+    </suite>
+
+</dictionary>
+
+
