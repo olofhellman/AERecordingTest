@@ -6,6 +6,7 @@
 //
 
 import Cocoa
+import AppKit
 
 @main
 public class AppDelegate: NSObject, NSApplicationDelegate {
@@ -35,7 +36,39 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
     public func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         return true
     }
+ 
+    @IBAction func setSecretToRandomName(_ sender: Any) {
+        let names = ["Chris", "Espinosa", "Quinn", "Eskimo", "Andy", "Bachorski", "Nebel", "Sal", "Soghoian"]
+        let randomInt = Int.random(in: 0..<names.count)
+        
+        let newSecret = names[randomInt]
+        NSLog("new secret \(newSecret)")
+        let targetDescriptor = NSAppleEventDescriptor.currentProcess()
+ 
+        let event = NSAppleEventDescriptor.appleEvent(
+            withEventClass: AEEventClass(kAECoreSuite),
+            eventID:kAESetData,
+            targetDescriptor: targetDescriptor,
+            returnID: AEReturnID(kAutoGenerateReturnID),
+            transactionID: AETransactionID(kAnyTransactionID))
+         
+        event.dump(str: "just created")
+         
+        event.setParam(NSAppleEventDescriptor(string: newSecret), forKeyword: keyAEData)
+        
+        if let secretDescriptor = NSAppleEventDescriptor.createObjSpecifier(of: "prop".asDescType(), container: nil, form: formPropertyID, data: NSAppleEventDescriptor(typeCode: "Secr".asDescType())) {
 
-
+            event.setParam(secretDescriptor, forKeyword: keyDirectObject)
+        }
+        
+        var sendOptions = NSAppleEventDescriptor.SendOptions.defaultOptions
+        // sendOptions.insert(.dontExecute)
+        Task {
+            event.dump(str: "starting Task")
+            appleEventDispatcher.dispatch(event, sendOptions: sendOptions)
+            event.dump(str: "ending Task")
+        }
+    }
+ 
 }
 

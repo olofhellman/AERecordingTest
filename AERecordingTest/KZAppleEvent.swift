@@ -12,12 +12,63 @@ import CoreFoundation
 import CoreServices
 import AppKit
 
+
+extension String {
+    public func asDescType() -> DescType {
+        return UTGetOSTypeFromString(self as NSString)
+    }
+}
+
+extension DescType {
+ 
+    public func asString() -> String {
+        let cString: [CChar] = [
+            CChar(self >> 24 & 0xFF),
+            CChar(self >> 16 & 0xFF),
+            CChar(self >> 8 & 0xFF),
+            CChar(self & 0xFF),
+            0
+        ]
+        return String(cString: cString)
+    }
+}
+extension NSAppleEventDescriptor {
+
+    public static func createObjSpecifier(of whatClass: DescType, container: NSAppleEventDescriptor?, form: Int, data: NSAppleEventDescriptor) ->  NSAppleEventDescriptor? {
+
+        let recordDescriptor = NSAppleEventDescriptor.record()
+        
+        let useContainer = container ?? NSAppleEventDescriptor.null()
+        let fccForm = FourCharCode(form)
+        recordDescriptor.setParam(useContainer, forKeyword: AEKeyword(keyAEContainer))
+        recordDescriptor.setParam(NSAppleEventDescriptor(enumCode: fccForm), forKeyword: AEKeyword(keyAEKeyForm))
+        recordDescriptor.setParam(NSAppleEventDescriptor(typeCode: whatClass), forKeyword: AEKeyword(keyAEDesiredClass))
+        recordDescriptor.setParam(data, forKeyword: AEKeyword(keyAEKeyData))
+
+        let objSpec = recordDescriptor.coerce(toDescriptorType: typeObjectSpecifier)
+
+        return  objSpec
+    }
+    
+    public func dump(str: String) {
+        print("Dumping NSAppleEvent: \(str)")
+        print("NSAppleEvent " + "eventClass: \(self.eventClass.asString())")
+        print("NSAppleEvent " + "eventID: \(self.eventID.asString())")
+        print("NSAppleEvent " + "eventParams:  ")
+        let nItems = self.numberOfItems
+        for n in 0..<nItems {
+            print("KZAppleEvent " + "    \(n): \(String(describing: self.atIndex(n)))")
+        }
+        return
+     }
+}
+
 @objc
 public class KZAppleEvent: NSObject {
     var m_nsEvent: NSAppleEventDescriptor? // was "AppleEvent"
     var m_nsEventReply: NSAppleEventDescriptor? // was "AppleEvent"
-    var m_eventID: DescType
-    var m_eventClass: DescType
+    var m_eventID: AEEventID
+    var m_eventClass: AEEventClass
     var m_eventReturnValue: OSStatus
     var m_offendingObject: NSAppleEventDescriptor?
     var m_errNumber: OSStatus
@@ -47,7 +98,9 @@ public class KZAppleEvent: NSObject {
         self.m_refcon = refcon
     }
 
-    convenience init(nsAppleEvent: NSAppleEventDescriptor, nsAppleEventReply: NSAppleEventDescriptor, refcon: Int32) {
+    convenience init(nsAppleEvent: NSAppleEventDescriptor, nsAppleEventReply:
+        NSAppleEventDescriptor, refcon: Int32) {
+        nsAppleEvent.dump(str: "KZAppleEventInit")
         self.init()
         self.m_nsEvent = nsAppleEvent
         self.m_nsEventReply = nsAppleEventReply
@@ -90,10 +143,12 @@ public class KZAppleEvent: NSObject {
     }
     
     @MainActor func handleGetDataAppleEvent() {
+        NSLog("Handling getData event")
         m_result = NSAppleEventDescriptor(string: AppDelegate.shared.secret)
     }
     
     @MainActor func handleSetDataAppleEvent() {
+        NSLog("Handling setData event")
         let dataParam = self.eventParamDescriptor(key: keyAEData, desiredType: typeWildCard)
         if let newSecret = dataParam?.stringValue {
             AppDelegate.shared.secret = newSecret
@@ -118,9 +173,6 @@ public class KZAppleEvent: NSObject {
         
         return self.finish()
     }
-     
-
- 
     
     public func packageAEReply() {
         if self.m_errNumber == noErr {
@@ -237,13 +289,12 @@ public class KZAppleEvent: NSObject {
         return (noErr, descriptor.booleanValue)
     }
 
-
-    func dump() {
-        print("KZAppleEvent " + "eventClass: \(m_eventClass)")
-        print("KZAppleEvent " + "eventID: \(m_eventID)")
+    func dump() { 
+        print("KZAppleEvent " + "eventClass: \(m_eventClass.asString())")
+        print("KZAppleEvent " + "eventID: \(m_eventID.asString())")
         print("KZAppleEvent " + "eventParams:  ")
-        guard let m_nsEvent, m_nsEvent.isRecordDescriptor else {
-            print("KZAppleEvent " + "    m_event was not a record descriptor")
+        guard let m_nsEvent else {
+            print("KZAppleEvent: " + " m_event was nil")
             return
         }
         let nItems = m_nsEvent.numberOfItems

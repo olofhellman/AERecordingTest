@@ -45,6 +45,7 @@ public class KZAppleEventDispatcher {
             targetDescriptor: nil,
             returnID: 0,
             transactionID:AETransactionID(kAnyTransactionID))
+       event.dump(str: "in dispatchToSelf()")
   
         let kzAppleEvent = KZAppleEvent(nsAppleEvent: event, nsAppleEventReply: useReply, refcon: refcon)
         let eventResult = kzAppleEvent.handleAppleEvent()
@@ -58,6 +59,8 @@ public class KZAppleEventDispatcher {
     @MainActor
     public func dispatch(_ appleEvent: NSAppleEventDescriptor, sendOptions options: NSAppleEventDescriptor.SendOptions?, refcon: Int32 = 0) -> (OSStatus, NSAppleEventDescriptor?) {
     
+        appleEvent.dump(str: "entered dispatch()")
+
         let dontSend = options?.contains(.dontExecute) ?? false
         let waitForReply = options?.contains(.waitForReply) ?? false
         
@@ -70,8 +73,10 @@ public class KZAppleEventDispatcher {
         
         // Seems like sending AppleEvent to self requires some
         // arcane permissions
+         appleEvent.dump(str: "calling sendEvent()")
         let recordingResult = try? appleEvent.sendEvent(options: sendOptions, timeout: 60)
-        
+         appleEvent.dump(str: "called sendEvent()")
+       
         // result can be nil if we said noReply
         if let recordingResult {
             print("recording result: \(recordingResult)")
@@ -88,7 +93,9 @@ public class KZAppleEventDispatcher {
             sendOptions.insert(.waitForReply)
             sendOptions.remove(.noReply)
         }
-        
+ 
+          appleEvent.dump(str: "calling dispatchToSelf()")
+
         let (_, reply) = dispatchToSelf(appleEvent, reply: nil, refcon: refcon)
         print ( "reply  code is \(reply?.debugDescription ?? "nil descriptor")")
         guard let result = reply?.forKeyword(keyAEResult) else {

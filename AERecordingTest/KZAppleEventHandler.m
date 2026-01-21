@@ -56,6 +56,15 @@ OSErr KZInstallRequiredSuiteHandlers(void)
      }
      return noErr;
 }
+OSErr KZInstallInstallUberHandler (void)
+{
+     AEEventHandlerUPP handlerUPP = NewAEEventHandlerUPP((AEEventHandlerProcPtr) KZAppleEventUberHandler);
+     OSErr err = AEInstallEventHandler(typeWildCard ,typeWildCard, handlerUPP, 0L, false);
+     if (err != noErr) {
+         NSLog(@"err from installing Uber AEHandler");
+     }
+     return err;
+}
 
 OSErr KZInstallInstallSuiteWildcardHandler (DescType suiteID)
 {
@@ -77,4 +86,12 @@ OSErr KZAppleEventHandler ( AppleEvent *event, AppleEvent * reply, int32_t refco
         return noErr;
     }
     return err;
+}
+
+OSErr KZAppleEventUberHandler ( AppleEvent *event, AppleEvent * reply, int32_t refcon)
+{
+    KZAppleEvent *kzAppleEvent = [[KZAppleEvent alloc] initWithEvent:event reply:reply refcon:refcon];
+    NSLog (@"%@", [NSString stringWithFormat: @"KZAppleEventUberHandler called:"]);
+ 
+    return noErr;
 }

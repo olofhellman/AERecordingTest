@@ -22,5 +22,7 @@ AEEventHandlerUPP KZGenericHandler(void);
 OSStatus KZTriggerPermissionsDialog(void);
 
 OSErr KZInstallRequiredSuiteHandlers (void);
+OSErr KZInstallInstallUberHandler (void);
 OSErr KZInstallInstallSuiteWildcardHandler (DescType suiteID);
 OSErr KZAppleEventHandler (AppleEvent *event, AppleEvent * theReply, int32_t refcon);
+OSErr KZAppleEventUberHandler ( AppleEvent *event, AppleEvent * reply, int32_t refcon);

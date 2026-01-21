@@ -1,4 +1,4 @@
 tell application "AERecordingTest"
-	set secret to "Bill"
+	-- set secret to "Fred"
 	get secret
 end tell
