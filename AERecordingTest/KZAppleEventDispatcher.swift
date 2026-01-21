@@ -45,7 +45,6 @@ public class KZAppleEventDispatcher {
             targetDescriptor: nil,
             returnID: 0,
             transactionID:AETransactionID(kAnyTransactionID))
-       event.dump(str: "in dispatchToSelf()")
   
         let kzAppleEvent = KZAppleEvent(nsAppleEvent: event, nsAppleEventReply: useReply, refcon: refcon)
         let eventResult = kzAppleEvent.handleAppleEvent()
@@ -59,7 +58,41 @@ public class KZAppleEventDispatcher {
     @MainActor
     public func dispatch(_ appleEvent: NSAppleEventDescriptor, sendOptions options: NSAppleEventDescriptor.SendOptions?, refcon: Int32 = 0) -> (OSStatus, NSAppleEventDescriptor?) {
     
-        appleEvent.dump(str: "entered dispatch()")
+        // dispatchExternally() sends the event normally
+        // if an AppleScript Editor window turns on recording, the delivery will fail
+ 
+        // dispatchInternallyWithRecording() sends the event with .dontExecute
+        // but then calls the AppleEventHandler on its own
+        // This is a workaround for the fact that if recording is turned on
+        // dispatchExternally() will fail
+        // if an AppleScript Editor window turns on recording, the delivery will fail
+        // However, sending events from AppleScript Editor will still faile
+        // if recording is turned on
+ 
+        // Use one of the following two lines:
+        // return dispatchExternally(appleEvent, sendOptions: options, refcon: refcon)
+        return dispatchInternallyWithRecording(appleEvent, sendOptions: options, refcon: refcon)
+    }
+    
+    @MainActor
+    public func dispatchExternally(_ appleEvent: NSAppleEventDescriptor, sendOptions options: NSAppleEventDescriptor.SendOptions?, refcon: Int32 = 0) -> (OSStatus, NSAppleEventDescriptor?) {
+         
+        var sendOptions = options ?? NSAppleEventDescriptor.SendOptions.defaultOptions
+        
+        let result = try? appleEvent.sendEvent(options: sendOptions, timeout: 60)
+       
+        // result can be nil if we said noReply
+        if let result {
+            print("externalDispatch result: \(result)")
+        }
+        else {
+            print("externalDispatch result was nil")
+        }
+        return (noErr, result)
+    }
+    
+    @MainActor
+    public func dispatchInternallyWithRecording(_ appleEvent: NSAppleEventDescriptor, sendOptions options: NSAppleEventDescriptor.SendOptions?, refcon: Int32 = 0) -> (OSStatus, NSAppleEventDescriptor?) {
 
         let dontSend = options?.contains(.dontExecute) ?? false
         let waitForReply = options?.contains(.waitForReply) ?? false
@@ -70,31 +103,16 @@ public class KZAppleEventDispatcher {
             sendOptions.remove(.waitForReply)
             sendOptions.insert(.noReply)
         }
-        
-        // Seems like sending AppleEvent to self requires some
-        // arcane permissions
-         appleEvent.dump(str: "calling sendEvent()")
-        let recordingResult = try? appleEvent.sendEvent(options: sendOptions, timeout: 60)
-         appleEvent.dump(str: "called sendEvent()")
-       
-        // result can be nil if we said noReply
-        if let recordingResult {
-            print("recording result: \(recordingResult)")
-        }
-        else {
-            print("recording result was nil")
+
+        if let appleEventForRecording = appleEvent.copy() as? NSAppleEventDescriptor {
+            print("sending .dontExecute event for recording")
+            let recordingResult = try? appleEventForRecording.sendEvent(options: sendOptions, timeout: 60)
+            // result will be nil if we said noReply
         }
         
         if dontSend {
            return (noErr, nil)
         }
-        
-        if (waitForReply) {
-            sendOptions.insert(.waitForReply)
-            sendOptions.remove(.noReply)
-        }
- 
-          appleEvent.dump(str: "calling dispatchToSelf()")
 
         let (_, reply) = dispatchToSelf(appleEvent, reply: nil, refcon: refcon)
         print ( "reply  code is \(reply?.debugDescription ?? "nil descriptor")")

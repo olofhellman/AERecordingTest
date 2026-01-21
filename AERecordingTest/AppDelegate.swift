@@ -52,8 +52,6 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
             returnID: AEReturnID(kAutoGenerateReturnID),
             transactionID: AETransactionID(kAnyTransactionID))
          
-        event.dump(str: "just created")
-         
         event.setParam(NSAppleEventDescriptor(string: newSecret), forKeyword: keyAEData)
         
         if let secretDescriptor = NSAppleEventDescriptor.createObjSpecifier(of: "prop".asDescType(), container: nil, form: formPropertyID, data: NSAppleEventDescriptor(typeCode: "Secr".asDescType())) {
@@ -64,9 +62,7 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         var sendOptions = NSAppleEventDescriptor.SendOptions.defaultOptions
         // sendOptions.insert(.dontExecute)
         Task {
-            event.dump(str: "starting Task")
             appleEventDispatcher.dispatch(event, sendOptions: sendOptions)
-            event.dump(str: "ending Task")
         }
     }
  

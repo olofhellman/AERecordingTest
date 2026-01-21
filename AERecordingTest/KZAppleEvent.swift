@@ -100,7 +100,6 @@ public class KZAppleEvent: NSObject {
 
     convenience init(nsAppleEvent: NSAppleEventDescriptor, nsAppleEventReply:
         NSAppleEventDescriptor, refcon: Int32) {
-        nsAppleEvent.dump(str: "KZAppleEventInit")
         self.init()
         self.m_nsEvent = nsAppleEvent
         self.m_nsEventReply = nsAppleEventReply
@@ -157,7 +156,6 @@ public class KZAppleEvent: NSObject {
     
     @objc(handleAppleEvent)
     @MainActor public func handleAppleEvent() -> OSStatus {
-        self.dump()
         // for the purposes of this demo, handle only get and set
         if (m_eventID == kAEOpenApplication) {
             return noErr
